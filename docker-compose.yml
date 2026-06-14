@@ -1,0 +1,87 @@
+# Stream Control Center – Docker Compose
+# Profile: production (default) | development
+
+x-common-env: &common-env
+  env_file:
+    - .env
+  environment:
+    NODE_ENV: production
+    PROC_PATH: /proc
+    DATA_DIR: /app/data
+
+x-security: &security
+  read_only: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  cap_add:
+    - NET_RAW
+    - NET_BIND_SERVICE
+  tmpfs:
+    - /tmp:size=64M,mode=1777
+
+services:
+  stream-control-center:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: stream-control-center
+    restart: unless-stopped
+    <<: [*common-env, *security]
+    user: "1001:1001"
+
+    # ❗ FIX: kein host mode mehr
+    # network_mode: host
+
+    # ✅ korrektes Port-Mapping
+    ports:
+      - "3001:3001"
+
+    volumes:
+      - scc-data:/app/data
+      - /proc:/proc:ro
+      - /var/log/obs:/var/log/obs:ro
+      - /var/log/noalbs:/var/log/noalbs:ro
+      - /run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro
+
+    # optional: einfacher Healthcheck (robuster)
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  stream-control-center-dev:
+    profiles: [development]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: stream-control-center-dev
+    <<: *common-env
+    environment:
+      NODE_ENV: development
+      MOCK_MODE: 'true'
+      DATA_DIR: /app/data
+
+    ports:
+      - "3001:3001"
+      - "5173:5173"   # optional für Vite Dev Server
+
+    volumes:
+      - scc-data:/app/data
+      - ./backend/src:/app/backend/src:ro
+      - ./frontend/src:/app/frontend/src:ro
+
+    # dev darf mehr Ressourcen nutzen
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+
+volumes:
+  scc-data:

@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply min-h-screen bg-surface text-gray-100;
+  }
+
+  html.light body {
+    @apply bg-gray-50 text-gray-900;
+  }
+
+  html.light .card {
+    @apply border-gray-200 bg-white shadow-sm;
+  }
+
+  html.light .btn-ghost {
+    @apply border-gray-300 text-gray-700 hover:bg-gray-100;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-gray-700/50 bg-surface-light p-5 shadow-lg;
+  }
+
+  .metric-value {
+    @apply text-2xl font-bold tracking-tight;
+  }
+
+  .btn {
+    @apply rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent-blue text-white hover:bg-blue-600;
+  }
+
+  .btn-success {
+    @apply btn bg-accent text-gray-900 hover:bg-green-400;
+  }
+
+  .btn-danger {
+    @apply btn bg-accent-red text-white hover:bg-red-600;
+  }
+
+  .btn-warning {
+    @apply btn bg-accent-yellow text-gray-900 hover:bg-yellow-400;
+  }
+
+  .btn-ghost {
+    @apply btn border border-gray-600 bg-transparent text-gray-300 hover:bg-surface-lighter;
+  }
+
+  .nav-link {
+    @apply flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-400 transition hover:bg-surface-lighter hover:text-white;
+  }
+
+  html.light .nav-link {
+    @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900;
+  }
+
+  .nav-link-active {
+    @apply bg-surface-lighter text-accent;
+  }
+
+  html.light .nav-link-active {
+    @apply bg-gray-100 text-green-600;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-surface;
+}
+
+html.light ::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-gray-600 hover:bg-gray-500;
+}

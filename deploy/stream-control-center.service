@@ -1,0 +1,26 @@
+[Unit]
+Description=Stream Control Center – Ubuntu Streaming Server Dashboard
+Documentation=https://github.com/your-org/stream-control-center
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=stream
+Group=stream
+WorkingDirectory=/opt/stream-control-center/backend
+EnvironmentFile=/opt/stream-control-center/.env
+ExecStart=/usr/bin/node dist/index.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=stream-control-center
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/opt/stream-control-center
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+[Unit]
+Description=NOALBS Auto Scene Switcher
+After=network-online.target obs.service
+Wants=obs.service
+
+[Service]
+Type=simple
+User=stream
+Group=stream
+WorkingDirectory=/opt/noalbs
+ExecStart=/usr/bin/node index.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/var/log/noalbs/noalbs.log
+StandardError=append:/var/log/noalbs/noalbs.log
+
+[Install]
+WantedBy=multi-user.target

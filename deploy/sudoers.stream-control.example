@@ -1,0 +1,11 @@
+# sudo-Berechtigungen für Stream Control Center
+# Speichern als: /etc/sudoers.d/stream-control-center
+# Validieren mit: sudo visudo -c -f /etc/sudoers.d/stream-control-center
+
+stream ALL=(ALL) NOPASSWD: /bin/systemctl start obs
+stream ALL=(ALL) NOPASSWD: /bin/systemctl stop obs
+stream ALL=(ALL) NOPASSWD: /bin/systemctl restart obs
+stream ALL=(ALL) NOPASSWD: /bin/systemctl start noalbs
+stream ALL=(ALL) NOPASSWD: /bin/systemctl stop noalbs
+stream ALL=(ALL) NOPASSWD: /bin/systemctl restart noalbs
+stream ALL=(ALL) NOPASSWD: /sbin/shutdown

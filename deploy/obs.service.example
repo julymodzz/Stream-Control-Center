@@ -1,0 +1,17 @@
+[Unit]
+Description=OBS Studio Streaming
+After=network-online.target graphical.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=stream
+Group=stream
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/stream/.Xauthority
+ExecStart=/usr/bin/obs --startstreaming --minimize-to-tray
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
