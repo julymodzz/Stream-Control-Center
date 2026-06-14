@@ -84,41 +84,116 @@ export class ObsControlService {
 
   private async runAction(
     action: ObsControlAction,
-    params: { sceneName?: string; sourceName?: string; visible?: boolean; muted?: boolean }
+    params: { 
+      sceneName?: string; 
+      sourceName?: string; 
+      visible?: boolean; 
+      muted?: boolean;
+      volume?: number;
+      filterName?: string;
+      filterEnabled?: boolean;
+      transitionName?: string;
+      hotkeyName?: string;
+      inputSettings?: Record<string, any>;
+      inputName?: string;
+    }
   ): Promise<string> {
+    const inputName = params.sourceName || params.inputName;
+    const currentSceneName = params.sceneName || (await this.obsWs!.call('GetCurrentProgramScene') as { sceneName: string }).sceneName;
+
     switch (action) {
       case 'set-scene':
         if (!params.sceneName) throw new Error('sceneName erforderlich');
         await this.obsWs!.call('SetCurrentProgramScene', { sceneName: params.sceneName });
         return `Szene gewechselt zu ${params.sceneName}`;
+
       case 'start-stream':
         await this.obsWs!.call('StartStream');
         return 'Stream gestartet';
+
       case 'stop-stream':
         await this.obsWs!.call('StopStream');
         return 'Stream gestoppt';
+
       case 'start-recording':
         await this.obsWs!.call('StartRecord');
         return 'Aufnahme gestartet';
+
       case 'stop-recording':
         await this.obsWs!.call('StopRecord');
         return 'Aufnahme gestoppt';
+
       case 'set-source-visibility':
         if (!params.sourceName || params.visible === undefined) {
           throw new Error('sourceName und visible erforderlich');
         }
         await this.obsWs!.call('SetSceneItemEnabled', {
-          sceneName: params.sceneName || (await this.obsWs!.call('GetCurrentProgramScene') as { sceneName: string }).sceneName,
+          sceneName: currentSceneName,
           sceneItemId: await this.resolveSceneItemId(params.sourceName),
           sceneItemEnabled: params.visible,
         });
         return `Quelle ${params.sourceName} Sichtbarkeit: ${params.visible}`;
+
       case 'set-source-mute':
-        if (!params.sourceName || params.muted === undefined) {
-          throw new Error('sourceName und muted erforderlich');
+      case 'set-input-mute':
+        if (!inputName || params.muted === undefined) {
+          throw new Error('sourceName/inputName und muted erforderlich');
         }
-        await this.obsWs!.call('SetInputMute', { inputName: params.sourceName, inputMuted: params.muted });
-        return `Quelle ${params.sourceName} stumm: ${params.muted}`;
+        await this.obsWs!.call('SetInputMute', { inputName, inputMuted: params.muted });
+        return `Eingang ${inputName} stumm: ${params.muted}`;
+
+      // === EXPANDED FUNCTIONAL ACTIONS ===
+      case 'set-input-volume':
+        if (!inputName || params.volume === undefined) throw new Error('inputName und volume (0-1) erforderlich');
+        await this.obsWs!.call('SetInputVolume', { inputName, inputVolumeMul: params.volume });
+        return `Volume für ${inputName} auf ${params.volume} gesetzt`;
+
+      case 'toggle-input-filter':
+        if (!inputName || !params.filterName || params.filterEnabled === undefined) {
+          throw new Error('inputName, filterName und filterEnabled erforderlich');
+        }
+        await this.obsWs!.call('SetSourceFilterEnabled', {
+          sourceName: inputName,
+          filterName: params.filterName,
+          filterEnabled: params.filterEnabled,
+        });
+        return `Filter ${params.filterName} für ${inputName}: ${params.filterEnabled}`;
+
+      case 'refresh-browser-source':
+        if (!inputName) throw new Error('inputName für Browser Source erforderlich');
+        await this.obsWs!.call('PressInputPropertiesButton', {
+          inputName,
+          propertyName: 'refreshnocache',
+        });
+        return `Browser Source ${inputName} refreshed`;
+
+      case 'set-current-transition':
+        if (!params.transitionName) throw new Error('transitionName erforderlich');
+        await this.obsWs!.call('SetCurrentSceneTransition', { transitionName: params.transitionName });
+        return `Transition auf ${params.transitionName} gesetzt`;
+
+      case 'trigger-hotkey':
+        if (!params.hotkeyName) throw new Error('hotkeyName erforderlich');
+        await this.obsWs!.call('TriggerHotkeyByName', { hotkeyName: params.hotkeyName });
+        return `Hotkey ${params.hotkeyName} getriggert`;
+
+      case 'set-input-settings':
+        if (!inputName || !params.inputSettings) throw new Error('inputName und inputSettings erforderlich');
+        await this.obsWs!.call('SetInputSettings', {
+          inputName,
+          inputSettings: params.inputSettings,
+          overlay: true,
+        });
+        return `Input Settings für ${inputName} aktualisiert`;
+
+      case 'get-stats':
+        const stats = await this.obsWs!.call('GetStats');
+        return JSON.stringify(stats);
+
+      case 'get-output-settings':
+        const out = await this.obsWs!.call('GetOutputSettings', { outputName: 'adv_stream_output' }).catch(() => ({}));
+        return JSON.stringify(out);
+
       default:
         throw new Error(`Unbekannte OBS-Aktion: ${action}`);
     }
@@ -161,5 +236,38 @@ export class ObsControlService {
 
   isConnected(): boolean {
     return this.connected;
+  }
+
+  /**
+   * Functional: Snapshot current OBS state (scenes, sources, basic settings, filters, audio, output).
+   * Enables full OBS backup/restore - major USP vs traditional tools.
+   */
+  async getFullSnapshot(): Promise<any> {
+    if (!this.obsWs || !this.connected) throw new Error('OBS nicht verbunden');
+    const [sceneList, currentScene, streamSettings, recordSettings, stats] = await Promise.all([
+      this.obsWs.call('GetSceneList'),
+      this.obsWs.call('GetCurrentProgramScene'),
+      this.obsWs.call('GetStreamServiceSettings').catch(() => ({})),
+      this.obsWs.call('GetRecordStatus').catch(() => ({})),
+      this.obsWs.call('GetStats').catch(() => ({})),
+    ]);
+
+    const scenes = (sceneList as any).scenes || [];
+    const detailedScenes = await Promise.all(scenes.map(async (s: any) => {
+      const sceneName = s.sceneName || s.name;
+      try {
+        const items = await this.obsWs!.call('GetSceneItemList', { sceneName });
+        return { sceneName, items: (items as any).sceneItems || [] };
+      } catch { return { sceneName, items: [] }; }
+    }));
+
+    return {
+      timestamp: new Date().toISOString(),
+      currentScene: (currentScene as any).sceneName,
+      scenes: detailedScenes,
+      streamSettings,
+      recordStatus: recordSettings,
+      stats,
+    };
   }
 }

@@ -57,8 +57,8 @@ export function createControlRouter(
   });
 
   router.post('/obs/action', validate(obsControlSchema), async (req: Request, res: Response) => {
-    const { action, sceneName, sourceName, visible, muted } = req.body;
-    const result = await obsControl.execute(action, { sceneName, sourceName, visible, muted });
+    const { action, sceneName, sourceName, visible, muted, ...extra } = req.body;
+    const result = await obsControl.execute(action, { sceneName, sourceName, visible, muted, ...extra });
 
     await auditService.log(
       { userId: req.user!.sub, username: req.user!.username, sourceIp: getClientIp(req) },

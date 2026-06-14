@@ -1,6 +1,7 @@
 import { config } from '../config/env';
 import { logger } from '../observability/logger';
 import { mockStore } from './MockDataService';
+import { TwitchConfigStore } from './TwitchConfigStore';
 
 export interface EncoderProfile {
   id: string;
@@ -45,8 +46,9 @@ export interface ScenePreset {
  * - Scene Presets für professionelle Twitch-Produktion
  */
 export class ObsSettingsService {
-  private obsWs: any = null; // Wird später per Setter oder Dependency Injection gesetzt
+  private obsWs: any = null;
   private mock = config.mockMode ? mockStore : null;
+  private configStore: TwitchConfigStore | null = null; // Injected for configurable scene/source names (functional USP)
 
   // Professionelle Twitch 2026 Empfehlungen (Intel CPU Fokus)
   // Quellen: Twitch Inspector, OBS Best Practices 2025/2026, Intel oneVPL + x264
@@ -168,6 +170,18 @@ export class ObsSettingsService {
 
   setObsWebSocket(obsWs: any) {
     this.obsWs = obsWs;
+  }
+
+  setTwitchConfigStore(store: TwitchConfigStore) {
+    this.configStore = store;
+  }
+
+  private resolveSceneName(key: string, defaultName: string): string {
+    return this.configStore?.resolveSceneName(key, defaultName) || defaultName;
+  }
+
+  private resolveSourceName(key: string, defaultName: string): string {
+    return this.configStore?.resolveSourceName(key, defaultName) || defaultName;
   }
 
   /**
@@ -337,9 +351,45 @@ export class ObsSettingsService {
 
   /**
    * Gibt alle vordefinierten professionellen Twitch-Szenen-Presets zurück.
+   * Names are resolved at runtime from config store (configurable by streamer - no hardcodes).
    */
   getTwitchScenePresets(): ScenePreset[] {
-    return [...this.TWITCH_SCENE_PRESETS];
+    return this.TWITCH_SCENE_PRESETS.map(preset => {
+      const resolvedScene = this.resolveSceneName(
+        this.getSceneKeyFromName(preset.name),
+        preset.sceneName
+      );
+      const resolvedSourcesToShow = (preset.sourcesToShow || []).map(src => 
+        this.resolveSourceName(this.getSourceKeyFromDefault(src), src)
+      );
+      return {
+        ...preset,
+        sceneName: resolvedScene,
+        sourcesToShow: resolvedSourcesToShow,
+      };
+    });
+  }
+
+  private getSceneKeyFromName(name: string): string {
+    const map: Record<string, string> = {
+      'Raid': 'raid',
+      'Starting Soon': 'startingSoon',
+      'BRB': 'brb',
+      'Just Chatting': 'justChatting',
+      'Gameplay': 'gameplay',
+      'Ending Screen': 'ending',
+    };
+    return map[name] || name.toLowerCase().replace(/\s+/g, '');
+  }
+
+  private getSourceKeyFromDefault(defaultName: string): string {
+    const lower = defaultName.toLowerCase();
+    if (lower.includes('raid')) return 'raidOverlay';
+    if (lower.includes('prediction')) return 'predictionOverlay';
+    if (lower.includes('hype')) return 'hypeTrainOverlay';
+    if (lower.includes('sub')) return 'subAlert';
+    if (lower.includes('text')) return 'raidText';
+    return lower.replace(/\s+/g, '');
   }
 
   /**

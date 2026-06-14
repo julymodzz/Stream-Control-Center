@@ -107,6 +107,12 @@ const obsSettingsService = new ObsSettingsService();
 const twitchConfigStore = new TwitchConfigStore();
 const twitchService = new TwitchService(obsControlService, twitchConfigStore);
 
+// Wire configurable store into ObsSettingsService for runtime name resolution (functional config)
+obsSettingsService.setTwitchConfigStore(twitchConfigStore);
+
+// Wire notification for rich Twitch event alerts (point 5 integration)
+(twitchService as any).setNotificationService?.(notificationService);
+
 // Brücke: ObsSettingsService bekommt die aktive OBS-WS, sobald verfügbar
 // (wird bei jedem ensureConnected intern aktualisiert)
 setInterval(() => {

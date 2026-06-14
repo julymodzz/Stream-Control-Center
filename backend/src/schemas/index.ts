@@ -42,11 +42,28 @@ export const obsControlSchema = z.object({
     'stop-recording',
     'set-source-visibility',
     'set-source-mute',
+    'set-input-volume',
+    'set-input-mute',
+    'toggle-input-filter',
+    'refresh-browser-source',
+    'set-current-transition',
+    'trigger-hotkey',
+    'set-input-settings',
+    'get-stats',
+    'get-output-settings',
   ]),
   sceneName: z.string().max(128).optional(),
   sourceName: z.string().max(128).optional(),
   visible: z.boolean().optional(),
   muted: z.boolean().optional(),
+  // Additional params for expanded actions
+  volume: z.number().min(0).max(1).optional(),
+  filterName: z.string().optional(),
+  filterEnabled: z.boolean().optional(),
+  transitionName: z.string().optional(),
+  hotkeyName: z.string().optional(),
+  inputSettings: z.record(z.any()).optional(),
+  inputName: z.string().optional(), // alias for sourceName in some cases
 });
 
 export const logsQuerySchema = z.object({

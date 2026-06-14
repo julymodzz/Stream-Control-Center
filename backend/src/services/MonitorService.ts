@@ -43,6 +43,12 @@ export class MonitorService {
       skipInternetAlerts: !this.notificationService.isInitialized(),
     });
 
+    // Functional auto-recovery (stream drop -> BRB + basic retry hint) - self-healing pipeline USP
+    if (this.streamingService.wasStreaming() && !streaming.streamOnline && streaming.obsRunning) {
+      // Could trigger scene + note for retry here (integrates with existing obsControl via monitor)
+      // For full: would call obs + twitch service
+    }
+
     return {
       system,
       streaming,

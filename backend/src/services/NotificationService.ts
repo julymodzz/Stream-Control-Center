@@ -167,6 +167,20 @@ export class NotificationService {
     };
   }
 
+  // Functional: Create rich Twitch event alert (integrated with existing system + delivery)
+  createTwitchEventAlert(eventType: 'raid' | 'prediction' | 'sub' | 'hype', details: string) {
+    const typeMap: Record<string, AlertType> = {
+      raid: 'twitch_raid',
+      prediction: 'twitch_prediction',
+      sub: 'twitch_sub',
+      hype: 'twitch_hype',
+    };
+    const alert = this.createAlert(typeMap[eventType] || 'twitch_raid', 'info', details);
+    this.addAlert(alert);
+    void this.alertDelivery.deliver(alert);
+    return alert;
+  }
+
   private addAlert(alert: Alert): void {
     this.alerts.unshift(alert);
     if (this.alerts.length > config.notifications.maxHistory) {

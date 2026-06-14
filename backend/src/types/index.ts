@@ -161,7 +161,12 @@ export type AlertType =
   | 'high_packet_loss'
   | 'high_cpu'
   | 'high_ram'
-  | 'disk_full';
+  | 'disk_full'
+  // Twitch event alerts (rich contextual - functional USP)
+  | 'twitch_raid'
+  | 'twitch_prediction'
+  | 'twitch_sub'
+  | 'twitch_hype';
 
 export interface Alert {
   id: string;
@@ -214,7 +219,17 @@ export type ObsControlAction =
   | 'start-recording'
   | 'stop-recording'
   | 'set-source-visibility'
-  | 'set-source-mute';
+  | 'set-source-mute'
+  // Expanded functional OBS control (for streamer productivity + deep automation USP)
+  | 'set-input-volume'
+  | 'set-input-mute'  // already covered but explicit
+  | 'toggle-input-filter'
+  | 'refresh-browser-source'
+  | 'set-current-transition'
+  | 'trigger-hotkey'
+  | 'set-input-settings'
+  | 'get-stats'
+  | 'get-output-settings';
 
 export interface ControlResult {
   success: boolean;

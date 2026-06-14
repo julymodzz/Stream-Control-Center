@@ -53,8 +53,8 @@ export class TwitchService {
   private clientId: string | null = null;
   private clientSecret: string | null = null;
 
-  // Twitch-spezifische Szenen-Namen (konfigurierbar in Zukunft über Presets)
-  private readonly TWITCH_SCENES = {
+  // Twitch-spezifische Szenen-Namen - jetzt über ConfigStore auflösbar (funktionaler USP: Streamer kann eigene OBS-Namen verwenden)
+  private readonly DEFAULT_TWITCH_SCENES = {
     RAID: 'Raid',
     STARTING_SOON: 'Starting Soon',
     BRB: 'BRB',
@@ -67,6 +67,11 @@ export class TwitchService {
   constructor(obsControl: ObsControlService, configStore: TwitchConfigStore) {
     this.obsControl = obsControl;
     this.configStore = configStore;
+  }
+
+  private notificationService: any = null;
+  setNotificationService(ns: any) {
+    this.notificationService = ns;
   }
 
   async initialize(): Promise<void> {
@@ -439,16 +444,16 @@ export class TwitchService {
         break;
 
       case 'channel.hype_train.begin':
-        await this.obsControl.execute('set-scene', { sceneName: this.TWITCH_SCENES.JUST_CHATTING });
-        await this.toggleSource('Hype Train Overlay', true);
+        const justChattingScene = this.configStore.resolveSceneName('justChatting', this.DEFAULT_TWITCH_SCENES.JUST_CHATTING);
+        await this.obsControl.execute('set-scene', { sceneName: justChattingScene });
+        await this.toggleSource(this.configStore.resolveSourceName('hypeTrainOverlay', 'Hype Train Overlay'), true);
         break;
 
       case 'channel.prediction.begin':
-        await this.toggleSource('Prediction Overlay', true);
-        // Optional Text-Source mit Prediction Title updaten
+        await this.toggleSource(this.configStore.resolveSourceName('predictionOverlay', 'Prediction Overlay'), true);
         try {
           await this.obsControl['obsWs']?.call('SetInputSettings', {
-            inputName: 'Prediction-Text',
+            inputName: this.configStore.resolveSourceName('predictionText', 'Prediction-Text'),
             inputSettings: { text: (event?.title || 'Neue Prediction!') as any },
           });
         } catch { /* ignore */ }
@@ -456,14 +461,14 @@ export class TwitchService {
 
       case 'channel.prediction.end':
       case 'channel.prediction.lock':
-        await this.toggleSource('Prediction Overlay', false);
+        await this.toggleSource(this.configStore.resolveSourceName('predictionOverlay', 'Prediction Overlay'), false);
         break;
 
       case 'channel.subscribe':
       case 'channel.subscription.message':
-        // Beispiel: kurzes Highlight oder Sub-Alert Source einblenden
-        await this.toggleSource('Sub Alert', true);
-        setTimeout(() => this.toggleSource('Sub Alert', false), 8000);
+        const subAlertSrc = this.configStore.resolveSourceName('subAlert', 'Sub Alert');
+        await this.toggleSource(subAlertSrc, true);
+        setTimeout(() => this.toggleSource(subAlertSrc, false), 8000);
         break;
 
       // Weitere Events können hier einfach erweitert werden
@@ -477,33 +482,33 @@ export class TwitchService {
   private async onRaid(raid: { fromBroadcasterUserName: string; viewers: number }) {
     logger.info({ raider: raid.fromBroadcasterUserName, viewers: raid.viewers }, '!!! RAID EINGEGANGEN !!!');
 
-    // 1. Raid-Szene aktivieren (falls vorhanden)
-    const raidScene = this.TWITCH_SCENES.RAID;
+    // Use configurable names from store (functional improvement: no more hardcoding, streamer defines own OBS source/scene names)
+    const raidScene = this.configStore.resolveSceneName('raid', this.DEFAULT_TWITCH_SCENES.RAID);
+    const raidOverlaySource = this.configStore.resolveSourceName('raidOverlay', 'Raid Overlay');
+    const raidTextSource = this.configStore.resolveSourceName('raidText', 'Raid-Text');
+
     const result = await this.obsControl.execute('set-scene', { sceneName: raidScene });
 
     if (result.success) {
-      // 2. Wichtige Quellen sichtbar machen (Raid-Overlay, Text etc.)
       await this.obsControl.execute('set-source-visibility', {
-        sourceName: 'Raid Overlay',
+        sourceName: raidOverlaySource,
         visible: true,
       });
 
-      // 3. Dynamischen Text setzen (Beispiel: "Raid-Text" Source)
-      // Moderne OBS Versionen: Textquellen via SetInputSettings updaten
       try {
         await this.obsControl['obsWs']?.call('SetInputSettings', {
-          inputName: 'Raid-Text',
+          inputName: raidTextSource,
           inputSettings: {
             text: `RAID von ${raid.fromBroadcasterUserName} (${raid.viewers} Viewer)`,
           },
         });
       } catch {
-        // Fallback: Manche Setups nutzen Browser-Source mit Parametern
-        logger.debug('Raid-Text Source nicht gefunden oder anderer Typ');
+        logger.debug('Raid text source not found or wrong type - using configurable name');
       }
     }
 
-    // Optional: Discord-Benachrichtigung oder eigenes Alert-System triggern
+    // Rich contextual Twitch alert (integrated into NotificationService)
+    this.notificationService?.createTwitchEventAlert?.('raid', `Raid von ${raid.fromBroadcasterUserName} mit ${raid.viewers} Viewern`);
   }
 
   private async onChannelUpdate(event: any) {
@@ -518,7 +523,8 @@ export class TwitchService {
 
   private async onStreamOffline() {
     logger.info('[Twitch] Stream OFFLINE laut Twitch');
-    await this.obsControl.execute('set-scene', { sceneName: this.TWITCH_SCENES.ENDING });
+    const endingScene = this.configStore.resolveSceneName('ending', this.DEFAULT_TWITCH_SCENES.ENDING);
+    await this.obsControl.execute('set-scene', { sceneName: endingScene });
   }
 
   // ===================== ÖFFENTLICHE HILFSMETHODEN =====================

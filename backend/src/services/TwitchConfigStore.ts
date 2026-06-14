@@ -12,6 +12,26 @@ export interface TwitchStoredConfig {
   scopes?: string[];
   connectedAt?: string;
   lastRefreshedAt?: string;
+
+  // Functional: User-configurable mappings for OBS sources and scenes (core for easy streamer automation and USP)
+  sourceMappings?: {
+    raidOverlay?: string;
+    raidText?: string;
+    predictionOverlay?: string;
+    predictionText?: string;
+    hypeTrainOverlay?: string;
+    subAlert?: string;
+    [key: string]: string | undefined;
+  };
+  sceneNameOverrides?: {
+    raid?: string;
+    startingSoon?: string;
+    brb?: string;
+    justChatting?: string;
+    gameplay?: string;
+    ending?: string;
+    [key: string]: string | undefined;
+  };
 }
 
 export class TwitchConfigStore {
@@ -78,5 +98,35 @@ export class TwitchConfigStore {
 
   isConnected(): boolean {
     return !!this.data.accessToken && !!this.data.broadcasterUserId;
+  }
+
+  // Functional helpers for configurable mappings (prevents hardcoding, gives streamers full control over their OBS setup)
+  getSourceMappings() {
+    return this.data.sourceMappings || {};
+  }
+
+  async setSourceMappings(mappings: TwitchStoredConfig['sourceMappings']) {
+    this.data.sourceMappings = { ...this.data.sourceMappings, ...mappings };
+    await this.save();
+  }
+
+  getSceneNameOverrides() {
+    return this.data.sceneNameOverrides || {};
+  }
+
+  async setSceneNameOverrides(overrides: TwitchStoredConfig['sceneNameOverrides']) {
+    this.data.sceneNameOverrides = { ...this.data.sceneNameOverrides, ...overrides };
+    await this.save();
+  }
+
+  // Resolve with fallback to defaults
+  resolveSceneName(key: string, defaultName: string): string {
+    const overrides = this.getSceneNameOverrides();
+    return overrides[key as keyof typeof overrides] || defaultName;
+  }
+
+  resolveSourceName(key: string, defaultName: string): string {
+    const mappings = this.getSourceMappings();
+    return mappings[key as keyof typeof mappings] || defaultName;
   }
 }
