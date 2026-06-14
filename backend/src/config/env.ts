@@ -62,6 +62,22 @@ const envSchema = z.object({
   SMTP_FROM: z.string().optional(),
   DISCORD_WEBHOOK_URL: z.string().url().optional().or(z.literal('')),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+
+  // Twitch Integration (primär für Twitch-Streamer)
+  TWITCH_CLIENT_ID: z.string().optional(),
+  TWITCH_CLIENT_SECRET: z.string().optional(),
+  TWITCH_ACCESS_TOKEN: z.string().optional(),
+  TWITCH_REFRESH_TOKEN: z.string().optional(),
+  TWITCH_BROADCASTER_USER_ID: z.string().optional(),
+  TWITCH_EVENTSUB_ENABLED: z.coerce.boolean().default(true),
+
+  // Encoder / Hardware Präferenzen (Auto-Detect + manuelle Auswahl)
+  ENCODER_PREFERRED: z.enum(['auto', 'x264', 'qsv', 'nvenc', 'amf']).default('auto'),
+  ENCODER_PRESET: z.string().optional(), // z.B. veryfast, faster, quality, high_quality
+  TARGET_BITRATE_KBPS: z.coerce.number().default(6500),
+  STREAM_RESOLUTION: z.string().default('1920x1080'),
+  STREAM_FPS: z.coerce.number().default(60),
+  KEYFRAME_INTERVAL_SEC: z.coerce.number().default(2),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -166,6 +182,24 @@ export const config = {
   },
 
   logLevel: env.LOG_LEVEL,
+
+  twitch: {
+    clientId: env.TWITCH_CLIENT_ID,
+    clientSecret: env.TWITCH_CLIENT_SECRET,
+    accessToken: env.TWITCH_ACCESS_TOKEN,
+    refreshToken: env.TWITCH_REFRESH_TOKEN,
+    broadcasterUserId: env.TWITCH_BROADCASTER_USER_ID,
+    eventSubEnabled: env.TWITCH_EVENTSUB_ENABLED,
+  },
+
+  encoder: {
+    preferred: env.ENCODER_PREFERRED,
+    preset: env.ENCODER_PRESET,
+    targetBitrateKbps: env.TARGET_BITRATE_KBPS,
+    resolution: env.STREAM_RESOLUTION,
+    fps: env.STREAM_FPS,
+    keyframeIntervalSec: env.KEYFRAME_INTERVAL_SEC,
+  },
 } as const;
 
 if (config.mockMode) {

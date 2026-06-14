@@ -8,6 +8,7 @@ import {
   Radio,
   Settings,
   Shield,
+  Twitch,
   Users,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -17,6 +18,7 @@ const links = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/monitoring', label: 'Monitoring', icon: Activity, permission: 'monitoring.view' },
   { to: '/obs', label: 'OBS', icon: Radio, permission: 'dashboard.view' },
+  { to: '/twitch', label: 'Twitch', icon: Twitch, permission: 'dashboard.view' },
   { to: '/noalbs', label: 'NOALBS', icon: Layers, permission: 'dashboard.view' },
   { to: '/alerts', label: 'Alerts', icon: Bell, permission: 'alerts.view' },
   { to: '/audit', label: 'Audit Logs', icon: FileSearch, permission: 'audit.view' },

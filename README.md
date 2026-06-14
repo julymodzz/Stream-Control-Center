@@ -197,6 +197,53 @@ docker compose restart
 
 ```
 
+# Twitch Integration (primäre Plattform)
+
+Vollständige Unterstützung für Twitch 2026:
+
+- EventSub WebSocket (Raid, Channel Update, Stream Online/Offline, Hype Train, Predictions, Follow, Sub, Bits etc.)
+- Automatisches Szenen-Switching bei Raid (inkl. dynamischem Text in "Raid-Text" Source)
+- Titel & Kategorie direkt aus dem Dashboard aktualisieren (Helix)
+- **Intel CPU Encoder-Erkennung** + vordefinierte Twitch-optimierte Profile (x264 veryfast/faster + Intel QSV/oneVPL)
+- "Apply Twitch Profile" Buttons → setzt automatisch CBR + Keyframe 2s + empfohlene Presets
+- Professionelle Scene Presets (Starting Soon, Raid, BRB, Just Chatting, Gameplay, Ending Screen)
+- Manuelle Raid-Trigger + Credential-Setup für schnellen Einstieg
+
+## Einrichtung Twitch
+
+1. Gehe zu https://dev.twitch.tv/console/apps → App erstellen (oder bestehende nutzen)
+2. OAuth Token mit benötigten Scopes generieren (z.B. über https://twitchapps.com/tmi/ oder eigenen Flow):
+   - `channel:manage:broadcast`
+   - `channel:read:raids`
+   - `channel:read:subscriptions`
+   - `moderator:read:followers` (optional)
+3. Im Dashboard → Twitch Seite → Token einfügen oder per Env:
+
+```env
+TWITCH_CLIENT_ID=deine_client_id
+TWITCH_ACCESS_TOKEN=dein_user_access_token
+TWITCH_BROADCASTER_USER_ID=deine_user_id
+```
+
+4. "Auto-Detect + Bestes Intel-Profil" nutzen oder manuell ein Profil aus der Liste anwenden.
+
+**Wichtig für Intel Quick Sync auf Ubuntu:**
+- `intel-media-driver` + `libvpl2` / oneVPL installieren
+- OBS mit Hardware-Encoding Support kompilieren oder Flatpak/AppImage mit gutem Support nutzen
+
+# Encoder & Output Einstellungen
+
+Das Tool erkennt automatisch (über OBS) welcher Encoder läuft und bietet **Twitch-2026-Empfehlungen** für Intel CPUs an.
+
+Empfohlen (Stand 2026 für die meisten Twitch-Streamer auf Intel):
+- 1080p60 oder 900p60
+- CBR
+- Bitrate 5500–8000 kbps (je nach Qualität & Partner-Status)
+- Keyframe Interval exakt **2 Sekunden**
+- x264 "veryfast" oder QSV "quality"
+
+Nutze die Schaltflächen im Twitch-Tab des Dashboards.
+
 ---
 
 # Entwicklung

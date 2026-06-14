@@ -247,6 +247,33 @@ export interface MetricsHistoryPoint {
   downloadBytesPerSec: number;
 }
 
+// Twitch + Encoder (2026 Twitch-Streamer Features)
+export interface TwitchStatus {
+  isLive: boolean;
+  title: string;
+  categoryName: string;
+  viewerCount: number;
+  twitchConnected: boolean;
+}
+
+export interface EncoderProfile {
+  id: string;
+  label: string;
+  encoder: string;
+  preset: string;
+  bitrate: number;
+  resolution: string;
+  fps: number;
+  notes: string;
+}
+
+export interface ScenePreset {
+  name: string;
+  sceneName: string;
+  description: string;
+  recommendedFor?: string[];
+}
+
 export interface BackupMetadata {
   id: string;
   filename: string;

@@ -30,9 +30,12 @@ import {
   NoalbsService,
   NotificationService,
   ObsControlService,
+  ObsSettingsService,
   ProcessControlService,
   StreamingService,
   SystemService,
+  TwitchConfigStore,
+  TwitchService,
 } from './services';
 import { setupSocketIO, shutdownSocketIO } from './socket';
 
@@ -100,11 +103,31 @@ const monitorService = new MonitorService(
   logService
 );
 const processControlService = new ProcessControlService();
+const obsSettingsService = new ObsSettingsService();
+const twitchConfigStore = new TwitchConfigStore();
+const twitchService = new TwitchService(obsControlService, twitchConfigStore);
+
+// Brücke: ObsSettingsService bekommt die aktive OBS-WS, sobald verfügbar
+// (wird bei jedem ensureConnected intern aktualisiert)
+setInterval(() => {
+  const ws = (obsControlService as any).getWebSocket?.();
+  if (ws) {
+    obsSettingsService.setObsWebSocket(ws);
+  }
+}, 8000);
 
 async function bootstrap(): Promise<void> {
   await iamService.initialize();
   await auditService.initialize();
   await backupService.initialize();
+  await twitchConfigStore.load();
+
+  // Twitch + Encoder Services initialisieren (nach OBS-Connection möglich)
+  await twitchService.initialize();
+
+  // ObsSettingsService bekommt später die aktive WebSocket von ObsControlService (wird bei Bedarf über Setter verknüpft)
+  // Für volle Funktionalität kann ObsControlService später einen Callback oder direkten Zugriff bereitstellen.
+  // Hier nur zur Verfügung stellen.
 
   app.get('/api/health', (_req, res) => {
     res.json({
@@ -137,6 +160,9 @@ async function bootstrap(): Promise<void> {
     monitorService,
     processControlService,
     obsControlService,
+    obsSettingsService,
+    twitchService,
+    twitchConfigStore,
     alertDeliveryService,
     backupService,
   }));

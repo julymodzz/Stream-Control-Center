@@ -223,6 +223,46 @@ export interface ControlResult {
   timestamp: string;
 }
 
+// ==================== TWITCH ====================
+export interface TwitchCredentials {
+  clientId?: string;
+  clientSecret?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  broadcasterUserId?: string;
+}
+
+export interface TwitchStreamStatus {
+  isLive: boolean;
+  title: string;
+  categoryName: string;
+  categoryId: string;
+  viewerCount: number;
+  startedAt: string | null;
+}
+
+// ==================== ENCODER / OUTPUT ====================
+export interface EncoderProfile {
+  id: string;
+  label: string;
+  encoder: 'x264' | 'qsv' | 'nvenc' | 'amf';
+  preset: string;
+  profile: string;
+  tune?: string;
+  bitrate: number;
+  keyint: number;
+  resolution: string;
+  fps: number;
+  rateControl: string;
+  notes: string;
+}
+
+export interface ApplyEncoderResult {
+  success: boolean;
+  message: string;
+  applied?: Partial<EncoderProfile>;
+}
+
 export interface AuditLogEntry {
   id: string;
   userId: string;

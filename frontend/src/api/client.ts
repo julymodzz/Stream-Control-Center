@@ -331,3 +331,79 @@ export async function revokeApiToken(id: string): Promise<void> {
   await fetchCsrfToken();
   await apiFetch(`/api/v1/security/api-tokens/${id}`, { method: 'DELETE' });
 }
+
+// ==================== TWITCH + ENCODER ====================
+export async function fetchTwitchStatus() {
+  return apiFetch('/api/v1/twitch/status');
+}
+
+export async function updateTwitchStreamInfo(data: { title?: string; categoryIdOrName?: string }) {
+  await fetchCsrfToken();
+  return apiFetch('/api/v1/twitch/update-stream-info', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function triggerManualRaid(raiderName: string, viewerCount?: number) {
+  await fetchCsrfToken();
+  return apiFetch('/api/v1/twitch/trigger-raid', {
+    method: 'POST',
+    body: JSON.stringify({ raiderName, viewerCount }),
+  });
+}
+
+export async function fetchEncoderProfiles() {
+  return apiFetch('/api/v1/twitch/encoder-profiles');
+}
+
+export async function fetchCurrentOutputSettings() {
+  return apiFetch('/api/v1/twitch/current-output');
+}
+
+export async function fetchIntelDiagnostics() {
+  return apiFetch('/api/v1/twitch/intel-diagnostics');
+}
+
+export async function applyTwitchEncoderProfile(profileId: string) {
+  await fetchCsrfToken();
+  return apiFetch('/api/v1/twitch/apply-twitch-profile', {
+    method: 'POST',
+    body: JSON.stringify({ profileId }),
+  });
+}
+
+export async function applyProfileAndRestartStream(profileId: string) {
+  await fetchCsrfToken();
+  return apiFetch('/api/v1/twitch/apply-profile-and-restart', {
+    method: 'POST',
+    body: JSON.stringify({ profileId }),
+  });
+}
+
+export async function fetchTwitchScenePresets() {
+  return apiFetch('/api/v1/twitch/scene-presets');
+}
+
+export async function applyTwitchScenePreset(presetName: string) {
+  await fetchCsrfToken();
+  return apiFetch('/api/v1/twitch/apply-scene-preset', {
+    method: 'POST',
+    body: JSON.stringify({ presetName }),
+  });
+}
+
+export async function setTwitchCredentials(creds: { accessToken: string; refreshToken?: string; broadcasterUserId?: string }) {
+  await fetchCsrfToken();
+  return apiFetch('/api/v1/twitch/set-credentials', {
+    method: 'POST',
+    body: JSON.stringify(creds),
+  });
+}
+
+export async function getTwitchAuthUrl(redirectUri?: string) {
+  const q = redirectUri ? `?redirect_uri=${encodeURIComponent(redirectUri)}` : '';
+  return apiFetch(`/api/v1/twitch/auth-url${q}`);
+}
+
+export async function twitchDisconnect() {
+  await fetchCsrfToken();
+  return apiFetch('/api/v1/twitch/disconnect', { method: 'POST' });
+}

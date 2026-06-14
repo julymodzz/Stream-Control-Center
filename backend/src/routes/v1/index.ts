@@ -9,7 +9,10 @@ import { AlertDeliveryService } from '../../services/AlertDeliveryService';
 import { BackupService } from '../../services/BackupService';
 import { MonitorService } from '../../services/MonitorService';
 import { ObsControlService } from '../../services/ObsControlService';
+import { ObsSettingsService } from '../../services/ObsSettingsService';
 import { ProcessControlService } from '../../services/ProcessControlService';
+import { TwitchConfigStore } from '../../services/TwitchConfigStore';
+import { TwitchService } from '../../services/TwitchService';
 import { createAuditRouter } from './audit';
 import { createAuthRouter } from './auth';
 import { createBackupRouter } from './backup';
@@ -20,6 +23,7 @@ import { createLogsRouter } from './logs';
 import { createNotificationsRouter } from './notifications';
 import { createPreferencesRouter } from './preferences';
 import { createProfileRouter, createSecurityRouter } from './profile';
+import { createTwitchRouter } from './twitch';
 
 export interface V1Dependencies {
   authService: AuthService;
@@ -30,6 +34,9 @@ export interface V1Dependencies {
   monitorService: MonitorService;
   processControlService: ProcessControlService;
   obsControlService: ObsControlService;
+  obsSettingsService: ObsSettingsService;
+  twitchService: TwitchService;
+  twitchConfigStore: TwitchConfigStore;
   alertDeliveryService: AlertDeliveryService;
   backupService: BackupService;
 }
@@ -68,6 +75,16 @@ export function createV1Router(deps: V1Dependencies): Router {
     deps.userStore,
     deps.iamService,
     deps.tokenService,
+    deps.auditService
+  ));
+
+  // Twitch Integration + Encoder/Scene Presets (hoher Nutzen für Twitch Streamer)
+  router.use('/twitch', authenticate, authorize('obs.control', 'dashboard.view'), createTwitchRouter(
+    deps.twitchService,
+    deps.twitchConfigStore,
+    deps.obsSettingsService,
+    deps.obsControlService,
+    deps.monitorService,
     deps.auditService
   ));
 

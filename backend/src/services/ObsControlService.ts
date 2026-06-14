@@ -153,4 +153,13 @@ export class ObsControlService {
     }
     this.connected = false;
   }
+
+  // Für ObsSettingsService & TwitchService – direkter Zugriff auf die aktive Verbindung
+  getWebSocket() {
+    return this.obsWs;
+  }
+
+  isConnected(): boolean {
+    return this.connected;
+  }
 }
