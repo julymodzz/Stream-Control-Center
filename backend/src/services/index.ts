@@ -10,5 +10,6 @@ export { ObsSettingsService } from './ObsSettingsService';
 export { ProcessControlService } from './ProcessControlService';
 export { StreamingService } from './StreamingService';
 export { SystemService } from './SystemService';
+export { DesignerService } from './DesignerService';
 export { TwitchConfigStore } from './TwitchConfigStore';
 export { TwitchService } from './TwitchService';

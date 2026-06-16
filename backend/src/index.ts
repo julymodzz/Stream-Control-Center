@@ -24,6 +24,7 @@ import { createV1Router } from './routes/v1';
 import {
   AlertDeliveryService,
   BackupService,
+  DesignerService,
   LogService,
   MonitorService,
   NetworkService,
@@ -106,6 +107,7 @@ const processControlService = new ProcessControlService();
 const obsSettingsService = new ObsSettingsService();
 const twitchConfigStore = new TwitchConfigStore();
 const twitchService = new TwitchService(obsControlService, twitchConfigStore);
+const designerService = new DesignerService(obsControlService, twitchConfigStore);
 
 // Wire configurable store into ObsSettingsService for runtime name resolution (functional config)
 obsSettingsService.setTwitchConfigStore(twitchConfigStore);
@@ -166,6 +168,7 @@ async function bootstrap(): Promise<void> {
     monitorService,
     processControlService,
     obsControlService,
+    designerService,
     obsSettingsService,
     twitchService,
     twitchConfigStore,

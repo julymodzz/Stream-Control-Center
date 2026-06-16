@@ -407,3 +407,44 @@ export async function twitchDisconnect() {
   await fetchCsrfToken();
   return apiFetch('/api/v1/twitch/disconnect', { method: 'POST' });
 }
+
+export async function fetchTwitchMappings() {
+  return apiFetch('/api/v1/twitch/mappings');
+}
+
+export async function saveTwitchMappings(data: { sourceMappings?: any; sceneNameOverrides?: any }) {
+  await fetchCsrfToken();
+  return apiFetch('/api/v1/twitch/mappings', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function fetchObsSnapshot() {
+  return apiFetch('/api/v1/twitch/obs-snapshot');
+}
+
+export async function triggerGoLive(params: { title?: string; categoryIdOrName?: string; encoderProfileId?: string; startingScene?: string }) {
+  await fetchCsrfToken();
+  return apiFetch('/api/v1/twitch/go-live', { method: 'POST', body: JSON.stringify(params) });
+}
+
+export async function fetchPrestreamChecklist() {
+  return apiFetch('/api/v1/twitch/prestream-checklist');
+}
+
+// Streaming Designer APIs - high-class dedicated UI
+export async function fetchDesignerTemplates() {
+  return apiFetch('/api/v1/designer/templates');
+}
+
+export async function fetchDesignerLayouts() {
+  return apiFetch('/api/v1/designer/layouts');
+}
+
+export async function saveDesignerLayout(layout: any) {
+  await fetchCsrfToken();
+  return apiFetch('/api/v1/designer/layouts', { method: 'POST', body: JSON.stringify(layout) });
+}
+
+export async function applyDesignerLayout(layout: any) {
+  await fetchCsrfToken();
+  return apiFetch('/api/v1/designer/apply', { method: 'POST', body: JSON.stringify(layout) });
+}

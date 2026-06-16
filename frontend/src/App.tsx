@@ -13,6 +13,7 @@ import { MetricsPage } from './pages/MetricsPage';
 import { NoalbsPage } from './pages/NoalbsPage';
 import { ObsPage } from './pages/ObsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { StreamingDesigner } from './pages/StreamingDesigner';
 import { TwitchPage } from './pages/TwitchPage';
 import { RolesPage } from './pages/RolesPage';
 import { SecurityPage } from './pages/SecurityPage';
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="health" element={<SystemHealthPage />} />
             <Route path="obs" element={<ObsPage />} />
             <Route path="twitch" element={<TwitchPage />} />
+            <Route path="designer" element={<StreamingDesigner />} />
             <Route path="noalbs" element={<NoalbsPage />} />
             <Route path="logs" element={<LogsPage />} />
             <Route path="alerts" element={<AlertsPage />} />

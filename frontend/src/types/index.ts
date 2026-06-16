@@ -274,6 +274,40 @@ export interface ScenePreset {
   recommendedFor?: string[];
 }
 
+// Streaming Designer - high-class component template system (new dedicated professional UI)
+export type DesignerComponentType = 'camera' | 'werbung' | 'overlay' | 'alert' | 'chat' | 'info' | 'background' | 'brb';
+
+export interface DesignerTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: DesignerComponentType;
+  preview: string; // short visual hint or class
+  defaultCustom: Record<string, any>;
+  proTips: string[];
+}
+
+export interface DesignerElement {
+  id: string;
+  type: DesignerComponentType;
+  templateId: string;
+  x: number; // % of canvas
+  y: number;
+  width: number;
+  height: number;
+  zIndex: number;
+  visible: boolean;
+  custom: Record<string, any>; // personalized values: colors, texts, urls, bindings
+}
+
+export interface DesignerLayout {
+  id: string;
+  name: string;
+  sceneName: string;
+  elements: DesignerElement[];
+  updatedAt: string;
+}
+
 export interface BackupMetadata {
   id: string;
   filename: string;

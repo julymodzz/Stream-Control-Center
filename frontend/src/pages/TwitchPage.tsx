@@ -14,6 +14,9 @@ import {
   setTwitchCredentials,
   getTwitchAuthUrl,
   twitchDisconnect,
+  fetchTwitchMappings,
+  saveTwitchMappings,
+  triggerGoLive,
 } from '../api/client';
 import { useAuthStore } from '../store/useAuthStore';
 import { Button } from '../components/ui/button';
@@ -30,6 +33,7 @@ export function TwitchPage() {
   const [intelDiag, setIntelDiag] = useState<any>(null);
   const [scenePresets, setScenePresets] = useState<ScenePreset[]>([]);
   const [message, setMessage] = useState('');
+  const [mappings, setMappings] = useState<{ sourceMappings: any; sceneNameOverrides: any } | null>(null);
 
   // Form States
   const [newTitle, setNewTitle] = useState('');
@@ -40,18 +44,20 @@ export function TwitchPage() {
 
   const loadAll = async () => {
     try {
-      const [status, profiles, output, presets, diag] = await Promise.all([
+      const [status, profiles, output, presets, diag, maps] = await Promise.all([
         fetchTwitchStatus(),
         fetchEncoderProfiles(),
         fetchCurrentOutputSettings(),
         fetchTwitchScenePresets(),
         fetchIntelDiagnostics().catch(() => null),
+        fetchTwitchMappings().catch(() => null),
       ]);
       setTwitchStatus(status);
       setEncoderProfiles(profiles);
       setCurrentOutput(output);
       setScenePresets(presets);
       if (diag) setIntelDiag(diag);
+      if (maps) setMappings(maps);
     } catch (e) {
       setMessage('Fehler beim Laden der Twitch-Daten');
     }
@@ -149,6 +155,36 @@ export function TwitchPage() {
     await loadAll();
   };
 
+  // Functional mappings editor (streamer can define their own OBS source/scene names - major ease + USP feature)
+  const [editingMappings, setEditingMappings] = useState('');
+  const handleSaveMappings = async () => {
+    try {
+      const parsed = JSON.parse(editingMappings || '{}');
+      await saveTwitchMappings(parsed);
+      setMessage('Mappings gespeichert. Alle Automatisierungen (Raid, Prediction etc.) nutzen jetzt deine Namen.');
+      await loadAll();
+    } catch (e) {
+      setMessage('Ungültiges JSON für Mappings. Beispiel: {"sourceMappings":{"raidOverlay":"MeinRaidOverlay"}}');
+    }
+  };
+
+  const handleGoLive = async () => {
+    if (!confirm('Go Live ausführen? Encoder (optional), Twitch-Info, Starting Scene + Stream Start.')) return;
+    const res = await triggerGoLive({
+      title: newTitle || undefined,
+      categoryIdOrName: newCategory || undefined,
+    });
+    setMessage('Go Live: ' + (res.data?.results?.join(' → ') || res.message || 'Erledigt'));
+    await loadAll();
+  };
+
+  // Load current mappings into editor when available
+  useEffect(() => {
+    if (mappings && !editingMappings) {
+      setEditingMappings(JSON.stringify(mappings, null, 2));
+    }
+  }, [mappings]);
+
   return (
     <div className="space-y-6 p-4 md:p-6">
       <h1 className="flex items-center gap-3 text-3xl font-bold">
@@ -201,6 +237,9 @@ export function TwitchPage() {
               </div>
               <Button onClick={handleUpdateStream} disabled={!newTitle && !newCategory}>
                 Auf Twitch übernehmen
+              </Button>
+              <Button onClick={handleGoLive} variant="success" className="ml-2">
+                GO LIVE (orchestriert)
               </Button>
             </CardContent>
           </Card>
@@ -329,6 +368,23 @@ export function TwitchPage() {
                   <Button size="sm" onClick={handleSetCredentials}>Token manuell speichern</Button>
                 </div>
               </details>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Configurable Mappings Editor - Functional: Streamer controls exact OBS names used by all automations */}
+        {canControl && mappings && (
+          <Card className="lg:col-span-2">
+            <CardHeader><CardTitle>OBS Source &amp; Scene Mappings (konfigurierbar)</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-gray-400">Passe die Namen an deine OBS-Szenen und Quellen an. Raid, Prediction etc. werden dann automatisch die richtigen verwenden.</p>
+              <textarea
+                className="w-full h-40 font-mono text-xs bg-surface-lighter p-2 rounded border border-gray-700"
+                value={editingMappings}
+                onChange={(e) => setEditingMappings(e.target.value)}
+              />
+              <Button onClick={handleSaveMappings}>Mappings speichern</Button>
+              <p className="text-xs">Beispiel: {'{"sourceMappings":{"raidOverlay":"DeinRaidOverlayName","raidText":"DeinRaidTextQuelle"}}'}</p>
             </CardContent>
           </Card>
         )}

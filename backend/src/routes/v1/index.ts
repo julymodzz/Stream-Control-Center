@@ -8,6 +8,7 @@ import { createAuthMiddleware, authorize } from '../../middleware/auth';
 import { AlertDeliveryService } from '../../services/AlertDeliveryService';
 import { BackupService } from '../../services/BackupService';
 import { MonitorService } from '../../services/MonitorService';
+import { DesignerService } from '../../services/DesignerService';
 import { ObsControlService } from '../../services/ObsControlService';
 import { ObsSettingsService } from '../../services/ObsSettingsService';
 import { ProcessControlService } from '../../services/ProcessControlService';
@@ -22,6 +23,7 @@ import { createUsersRouter, createRolesRouter } from './iam';
 import { createLogsRouter } from './logs';
 import { createNotificationsRouter } from './notifications';
 import { createPreferencesRouter } from './preferences';
+import { createDesignerRouter } from './designer';
 import { createProfileRouter, createSecurityRouter } from './profile';
 import { createTwitchRouter } from './twitch';
 
@@ -34,6 +36,7 @@ export interface V1Dependencies {
   monitorService: MonitorService;
   processControlService: ProcessControlService;
   obsControlService: ObsControlService;
+  designerService: DesignerService;
   obsSettingsService: ObsSettingsService;
   twitchService: TwitchService;
   twitchConfigStore: TwitchConfigStore;
@@ -85,6 +88,12 @@ export function createV1Router(deps: V1Dependencies): Router {
     deps.obsSettingsService,
     deps.obsControlService,
     deps.monitorService,
+    deps.auditService
+  ));
+
+  // Streaming Designer - new high-class dedicated route
+  router.use('/designer', authenticate, authorize('obs.control', 'dashboard.view'), createDesignerRouter(
+    deps.designerService,
     deps.auditService
   ));
 
